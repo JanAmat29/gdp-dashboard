@@ -36,13 +36,16 @@ def work_to_do(names, tasks):
 
     return names, tasks
 
-# Función para formatear las listas guardadas
-def format_saved_list(key, data):
+# Función para formatear listas guardadas (nombres)
+def format_saved_names(key, data):
     date_str = datetime.strptime(key, "%Y-%m-%d %H:%M:%S").strftime("%d %b %Y (%H:%M)")
-    if isinstance(data[0][0], list):  # Si son nombres
-        formatted = f"{date_str}: {', '.join([name[0] for name in data])}"
-    else:  # Si son tareas
-        formatted = f"{date_str}: {', '.join([f'{task[0]} ({task[1]})' for task in data])}"
+    formatted = f"{date_str}: {', '.join([name[0] for name in data])}"
+    return formatted
+
+# Función para formatear listas guardadas (tareas)
+def format_saved_tasks(key, data):
+    date_str = datetime.strptime(key, "%Y-%m-%d %H:%M:%S").strftime("%d %b %Y (%H:%M)")
+    formatted = f"{date_str}: {', '.join([f'{task[0]} ({task[1]})' for task in data])}"
     return formatted
 
 # Inicialización de memoria
@@ -82,38 +85,79 @@ if option == "Create a list of names and tasks":
         else:
             st.write("Please provide both names and tasks.")
 
-else:
-    st.write("### Choose a saved list")
+elif option == "Use existing lists of names and tasks":
+    st.write("### Choose saved names and tasks separately")
     if st.session_state.stored_data:
         saved_keys = list(st.session_state.stored_data.keys())
-        formatted_options = [
-            format_saved_list(key, st.session_state.stored_data[key][0] if option != "Use existing tasks and create a list of names" else st.session_state.stored_data[key][1])
+
+        # Nombres
+        formatted_names_options = [
+            format_saved_names(key, st.session_state.stored_data[key][0])
             for key in saved_keys
         ]
+        chosen_names_option = st.selectbox("Select a saved list of names:", options=formatted_names_options)
+        chosen_names_key = saved_keys[formatted_names_options.index(chosen_names_option)]
+        names = st.session_state.stored_data[chosen_names_key][0]
 
-        chosen_option = st.selectbox("Select a saved list:", options=formatted_options)
-        chosen_key = saved_keys[formatted_options.index(chosen_option)]
+        # Tareas
+        formatted_tasks_options = [
+            format_saved_tasks(key, st.session_state.stored_data[key][1])
+            for key in saved_keys
+        ]
+        chosen_tasks_option = st.selectbox("Select a saved list of tasks:", options=formatted_tasks_options)
+        chosen_tasks_key = saved_keys[formatted_tasks_options.index(chosen_tasks_option)]
+        tasks = st.session_state.stored_data[chosen_tasks_key][1]
 
-        if option == "Use existing lists of names and tasks":
-            names, tasks = st.session_state.stored_data[chosen_key]
-            st.write(f"Using names and tasks from: {chosen_option}")
-        elif option == "Use existing names and create a list of tasks":
-            names = st.session_state.stored_data[chosen_key][0]
-            st.write("### Enter Tasks and Difficulty")
-            task_input = st.text_area("Enter tasks in the format: task_name, difficulty (one per line):")
-            if task_input:
-                tasks = [[line.split(",")[0].strip(), int(line.split(",")[1])] for line in task_input.splitlines()]
-            if st.button("Organize Tasks"):
-                final_names, final_tasks = work_to_do(names, tasks)
-                st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
-        elif option == "Use existing tasks and create a list of names":
-            tasks = st.session_state.stored_data[chosen_key][1]
-            st.write("### Enter Names")
-            name_input = st.text_area("Enter names (one per line):")
-            if name_input:
-                names = [[name] for name in name_input.splitlines()]
-            if st.button("Organize Tasks"):
-                final_names, final_tasks = work_to_do(names, tasks)
-                st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
+        st.write("### Selected Names and Tasks:")
+        st.write(f"Names: {', '.join([name[0] for name in names])}")
+        st.write(f"Tasks: {', '.join([f'{task[0]} ({task[1]})' for task in tasks])}")
+
+        if st.button("Organize Tasks"):
+            final_names, final_tasks = work_to_do(names, tasks)
+            st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
+
+elif option == "Use existing names and create a list of tasks":
+    st.write("### Choose saved names")
+    if st.session_state.stored_data:
+        saved_keys = list(st.session_state.stored_data.keys())
+
+        formatted_names_options = [
+            format_saved_names(key, st.session_state.stored_data[key][0])
+            for key in saved_keys
+        ]
+        chosen_names_option = st.selectbox("Select a saved list of names:", options=formatted_names_options)
+        chosen_names_key = saved_keys[formatted_names_options.index(chosen_names_option)]
+        names = st.session_state.stored_data[chosen_names_key][0]
+
+        st.write("### Enter Tasks and Difficulty")
+        task_input = st.text_area("Enter tasks in the format: task_name, difficulty (one per line):")
+        if task_input:
+            tasks = [[line.split(",")[0].strip(), int(line.split(",")[1])] for line in task_input.splitlines()]
+        if st.button("Organize Tasks"):
+            final_names, final_tasks = work_to_do(names, tasks)
+            st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
+    else:
+        st.write("No saved data available.")
+
+elif option == "Use existing tasks and create a list of names":
+    st.write("### Choose saved tasks")
+    if st.session_state.stored_data:
+        saved_keys = list(st.session_state.stored_data.keys())
+
+        formatted_tasks_options = [
+            format_saved_tasks(key, st.session_state.stored_data[key][1])
+            for key in saved_keys
+        ]
+        chosen_tasks_option = st.selectbox("Select a saved list of tasks:", options=formatted_tasks_options)
+        chosen_tasks_key = saved_keys[formatted_tasks_options.index(chosen_tasks_option)]
+        tasks = st.session_state.stored_data[chosen_tasks_key][1]
+
+        st.write("### Enter Names")
+        name_input = st.text_area("Enter names (one per line):")
+        if name_input:
+            names = [[name] for name in name_input.splitlines()]
+        if st.button("Organize Tasks"):
+            final_names, final_tasks = work_to_do(names, tasks)
+            st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
     else:
         st.write("No saved data available.")
