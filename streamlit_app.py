@@ -1,5 +1,6 @@
 import streamlit as st
 from random import randint
+from datetime import datetime
 
 # Función para organizar tareas
 def work_to_do(names, tasks):
@@ -35,6 +36,15 @@ def work_to_do(names, tasks):
 
     return names, tasks
 
+# Función para formatear las listas guardadas
+def format_saved_list(key, data):
+    date_str = datetime.strptime(key, "%Y-%m-%d %H:%M:%S").strftime("%d %b %Y (%H:%M)")
+    if isinstance(data[0][0], list):  # Si son nombres
+        formatted = f"{date_str}: {', '.join([name[0] for name in data])}"
+    else:  # Si son tareas
+        formatted = f"{date_str}: {', '.join([f'{task[0]} ({task[1]})' for task in data])}"
+    return formatted
+
 # Inicialización de memoria
 if "stored_data" not in st.session_state:
     st.session_state.stored_data = {}
@@ -68,19 +78,42 @@ if option == "Create a list of names and tasks":
     if st.button("Organize Tasks"):
         if names and tasks:
             final_names, final_tasks = work_to_do(names, tasks)
+            st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
         else:
             st.write("Please provide both names and tasks.")
 
 else:
-    st.markdown(
-        """
-        <div style="text-align: center; margin-top: 50px;">
-            <h1 style="color: #ff5733; font-weight: bold;">We are cleaning details</h1>
-            <h2 style="color: #3498db; font-weight: bold;">to make it the most brilliant experience</h2>
-            <h1 style="color: #2ecc71; font-weight: bold;">Flishh! Flishh!</h1>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.write("### Choose a saved list")
+    if st.session_state.stored_data:
+        saved_keys = list(st.session_state.stored_data.keys())
+        formatted_options = [
+            format_saved_list(key, st.session_state.stored_data[key][0] if option != "Use existing tasks and create a list of names" else st.session_state.stored_data[key][1])
+            for key in saved_keys
+        ]
 
+        chosen_option = st.selectbox("Select a saved list:", options=formatted_options)
+        chosen_key = saved_keys[formatted_options.index(chosen_option)]
 
+        if option == "Use existing lists of names and tasks":
+            names, tasks = st.session_state.stored_data[chosen_key]
+            st.write(f"Using names and tasks from: {chosen_option}")
+        elif option == "Use existing names and create a list of tasks":
+            names = st.session_state.stored_data[chosen_key][0]
+            st.write("### Enter Tasks and Difficulty")
+            task_input = st.text_area("Enter tasks in the format: task_name, difficulty (one per line):")
+            if task_input:
+                tasks = [[line.split(",")[0].strip(), int(line.split(",")[1])] for line in task_input.splitlines()]
+            if st.button("Organize Tasks"):
+                final_names, final_tasks = work_to_do(names, tasks)
+                st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
+        elif option == "Use existing tasks and create a list of names":
+            tasks = st.session_state.stored_data[chosen_key][1]
+            st.write("### Enter Names")
+            name_input = st.text_area("Enter names (one per line):")
+            if name_input:
+                names = [[name] for name in name_input.splitlines()]
+            if st.button("Organize Tasks"):
+                final_names, final_tasks = work_to_do(names, tasks)
+                st.session_state.stored_data[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = (final_names, final_tasks)
+    else:
+        st.write("No saved data available.")
