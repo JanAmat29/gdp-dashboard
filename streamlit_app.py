@@ -3,6 +3,7 @@ from random import randint
 from datetime import datetime
 
 # Función para organizar tareas
+# Actualizar la visualización de las tareas asignadas a cada persona
 def work_to_do(names, tasks):
     for dif in reversed(range(1, 4)):
         for j in range(len(tasks)):
@@ -25,7 +26,8 @@ def work_to_do(names, tasks):
     st.write("### Tasks Organized Are:")
     for name in names:
         st.write(f"{name[0]} has to:")
-        st.write(", ".join(name[1:]))
+        for idx, task in enumerate(name[1:], start=1):
+            st.write(f"  {idx}. {task}")
 
     st.write("\n### Difficulty per person:")
     for name in names:
@@ -35,6 +37,7 @@ def work_to_do(names, tasks):
         st.write(f"{name[0]}: {avg_difficulty}")
 
     return names, tasks
+
 
 # Función para formatear listas guardadas (nombres)
 def format_saved_names(key, data):
