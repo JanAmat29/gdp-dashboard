@@ -1,6 +1,5 @@
 import streamlit as st
 from random import randint
-from datetime import datetime
 
 # Función para organizar tareas
 def work_to_do(names, tasks):
@@ -40,15 +39,6 @@ def work_to_do(names, tasks):
 if "stored_data" not in st.session_state:
     st.session_state.stored_data = {}
 
-# Función para guardar listas en memoria con descripción
-def save_list_in_memory(list_type, data):
-    timestamp = datetime.now().strftime("%d %b %Y (%H:%M)")
-    if list_type == "names":
-        description = f"{timestamp}: {', '.join([name[0] for name in data])}"
-    elif list_type == "tasks":
-        description = f"{timestamp}: {', '.join([f'{task[0]} ({task[1]})' for task in data])}"
-    st.session_state.stored_data[description] = data
-
 # Streamlit UI
 st.title("Task Organizer")
 st.write("Organize tasks efficiently among people.")
@@ -71,48 +61,26 @@ if option == "Create a list of names and tasks":
     name_input = st.text_area("Enter names (one per line):")
     if name_input:
         names = [[name] for name in name_input.splitlines()]
-        save_list_in_memory("names", names)
     st.write("### Enter Tasks and Difficulty")
     task_input = st.text_area("Enter tasks in the format: task_name, difficulty (one per line):")
     if task_input:
         tasks = [[line.split(",")[0].strip(), int(line.split(",")[1])] for line in task_input.splitlines()]
-        save_list_in_memory("tasks", tasks)
+    if st.button("Organize Tasks"):
+        if names and tasks:
+            final_names, final_tasks = work_to_do(names, tasks)
+        else:
+            st.write("Please provide both names and tasks.")
 
-elif option == "Use existing lists of names and tasks":
-    stored_names = {k: v for k, v in st.session_state.stored_data.items() if "names" in k}
-    stored_tasks = {k: v for k, v in st.session_state.stored_data.items() if "tasks" in k}
-    names_key = st.selectbox("Select a list of names:", list(stored_names.keys()))
-    tasks_key = st.selectbox("Select a list of tasks:", list(stored_tasks.keys()))
-    if names_key and tasks_key:
-        names = stored_names[names_key]
-        tasks = stored_tasks[tasks_key]
+else:
+    st.markdown(
+        """
+        <div style="text-align: center; margin-top: 50px;">
+            <h1 style="color: #ff5733; font-weight: bold;">We are cleaning details</h1>
+            <h2 style="color: #3498db; font-weight: bold;">to make it the most brilliant experience</h2>
+            <h1 style="color: #2ecc71; font-weight: bold;">Flishh! Flishh!</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-elif option == "Use existing names and create a list of tasks":
-    stored_names = {k: v for k, v in st.session_state.stored_data.items() if "names" in k}
-    names_key = st.selectbox("Select a list of names:", list(stored_names.keys()))
-    if names_key:
-        names = stored_names[names_key]
-        st.write("### Enter Tasks and Difficulty")
-        task_input = st.text_area("Enter tasks in the format: task_name, difficulty (one per line):")
-        if task_input:
-            tasks = [[line.split(",")[0].strip(), int(line.split(",")[1])] for line in task_input.splitlines()]
-            save_list_in_memory("tasks", tasks)
 
-elif option == "Use existing tasks and create a list of names":
-    stored_tasks = {k: v for k, v in st.session_state.stored_data.items() if "tasks" in k}
-    tasks_key = st.selectbox("Select a list of tasks:", list(stored_tasks.keys()))
-    if tasks_key:
-        tasks = stored_tasks[tasks_key]
-        st.write("### Enter Names")
-        name_input = st.text_area("Enter names (one per line):")
-        if name_input:
-            names = [[name] for name in name_input.splitlines()]
-            save_list_in_memory("names", names)
-
-if st.button("Organize Tasks"):
-    if names and tasks:
-        final_names, final_tasks = work_to_do(names, tasks)
-        save_list_in_memory("names", final_names)
-        save_list_in_memory("tasks", final_tasks)
-    else:
-        st.write("Please provide both names and tasks.")
