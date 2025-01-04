@@ -56,7 +56,7 @@ if "stored_data" not in st.session_state:
     st.session_state.stored_data = {}
 
 # Streamlit UI
-st.title("Task Organizer")
+st.title("Task To Do")
 st.write("Organize tasks efficiently among people.")
 
 option = st.radio(
